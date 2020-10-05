@@ -141,8 +141,7 @@ const scrape = async (userId, password) => {
       args: chromium.args,
       defaultViewport: chromium.defaultViewport,
       executablePath: await chromium.executablePath,
-      slowMo: 200,
-      headless: false,
+      headless: true,
       ignoreHTTPSErrors: true,
     });
 
@@ -196,4 +195,4 @@ const scrape = async (userId, password) => {
   console.log("Finished");
 };
 
-//scrape("1005292", "password");
+scrape("studentid", "password");

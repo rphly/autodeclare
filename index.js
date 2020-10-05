@@ -8,12 +8,15 @@ exports.handler = async (event, context, callback) => {
   let browser = null;
 
   async function handleDailyDeclarationPage(page) {
+    console.log("Handling Daily Declaration");
+    await wait(100);
     // quarantine order
     var [option2] = await page.$x(
       `//input[@id="pgContent1_rbNoticeNo" and @type="radio" and @name="ctl00$pgContent1$Notice"]`
     );
 
     if (option2 != null) {
+      console.log("option 2");
       option2.click();
     }
 
@@ -23,6 +26,7 @@ exports.handler = async (event, context, callback) => {
     );
 
     if (option3 != null) {
+      console.log("option 3");
       option3.click();
     }
 
@@ -32,6 +36,7 @@ exports.handler = async (event, context, callback) => {
     );
 
     if (option4 != null) {
+      console.log("option 4");
       option4.click();
     }
 
@@ -39,14 +44,18 @@ exports.handler = async (event, context, callback) => {
       `//input[@id='pgContent1_btnSave' and @name="ctl00$pgContent1$btnSave"]`
     );
 
-    if (button) {
-      await Promise.all([button.click(), wait(200)]);
-      page.close();
-      return;
+    if (button != null) {
+      await wait(200);
+      button.click();
+      console.log("Button clicked");
     }
+
+    await wait(500);
+    return;
   }
 
   async function handleTemperatureTakingPage(page) {
+    console.log("Handling Temp taking");
     // find option
     var [option] = await page.$x(
       `//option[text() = "Less than or equal to 37.6°C"]`
@@ -80,6 +89,7 @@ exports.handler = async (event, context, callback) => {
   }
 
   async function handleLogin(page, userId, password) {
+    console.log("Login");
     var [input] = await page.$x(
       `//input[@id='pgContent1_uiLoginid' and @name="ctl00$pgContent1$uiLoginid"]`
     );
@@ -136,15 +146,15 @@ exports.handler = async (event, context, callback) => {
       ignoreHTTPSErrors: true,
     });
 
-    let queryParams = event.queryStringParameters;
-
-    let userId = queryParams.userId.toString();
-    let password = queryParams.password.toString();
-
     loginPage = await startNewPageAndGo(
       `https://tts.sutd.edu.sg/tt_login.aspx`,
       browser
     );
+
+    let queryParams = event.queryStringParameters;
+
+    let userId = queryParams.userId.toString();
+    let password = queryParams.password.toString();
 
     await handleLogin(loginPage, userId, password);
 
@@ -182,15 +192,16 @@ exports.handler = async (event, context, callback) => {
     await handleDailyDeclarationPage(dailyDeclarationPage);
   } catch (error) {
     console.log(error);
-    return callback(error);
   } finally {
     if (browser !== null) {
       await browser.close();
     }
   }
+
   const response = {
     statusCode: 200,
     body: JSON.stringify("Finished."),
   };
+
   return response;
 };
