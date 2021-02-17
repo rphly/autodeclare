@@ -170,12 +170,12 @@ exports.handler = async (event, context, callback) => {
       browser
     );
 
-    //travelled
     var [option1] = await dailyDeclarationPage.$x(
-      `//input[@id="pgContent1_rbVisitOtherCountryNo" and @type="radio" and @name="ctl00$pgContent1$OtherCountryVisited"]`
+      `//input[@id="pgContent1_cbSetToNo" and @type="checkbox" and @name="ctl00$pgContent1$cbSetToNo"]`
     );
 
     if (option1 != null) {
+      console.log("option 1");
       option1.click();
     }
 
@@ -189,7 +189,17 @@ exports.handler = async (event, context, callback) => {
       (page) => page.url() == "https://tts.sutd.edu.sg/tt_daily_dec_user.aspx"
     )[0];
 
-    await handleDailyDeclarationPage(dailyDeclarationPage);
+    const [button] = await dailyDeclarationPage.$x(
+      `//input[@id='pgContent1_btnSave' and @name="ctl00$pgContent1$btnSave"]`
+    );
+
+    if (button != null) {
+      await wait(200);
+      button.click();
+      console.log("Button clicked");
+    }
+
+    await wait(500);
   } catch (error) {
     console.log(error);
   } finally {

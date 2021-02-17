@@ -7,52 +7,6 @@ const scrape = async (userId, password) => {
   let result = null;
   let browser = null;
 
-  async function handleDailyDeclarationPage(page) {
-    console.log("Handling Daily Declaration");
-    // quarantine order
-    var [option2] = await page.$x(
-      `//input[@id="pgContent1_rbNoticeNo" and @type="radio" and @name="ctl00$pgContent1$Notice"]`
-    );
-
-    if (option2 != null) {
-      console.log("option 2");
-      option2.click();
-    }
-
-    // close contact
-    var [option3] = await page.$x(
-      `//input[@id="pgContent1_rbContactNo" and @type="radio" and @name="ctl00$pgContent1$Contact"]`
-    );
-
-    if (option3 != null) {
-      console.log("option 3");
-      option3.click();
-    }
-
-    // MC for resp symptoms
-    var [option4] = await page.$x(
-      `//input[@id="pgContent1_rbMCNo" and @type="radio" and @name="ctl00$pgContent1$MC"]`
-    );
-
-    if (option4 != null) {
-      console.log("option 4");
-      option4.click();
-    }
-
-    const [button] = await page.$x(
-      `//input[@id='pgContent1_btnSave' and @name="ctl00$pgContent1$btnSave"]`
-    );
-
-    if (button != null) {
-      await wait(200);
-      button.click();
-      console.log("Button clicked");
-    }
-
-    await wait(500);
-    return;
-  }
-
   async function handleTemperatureTakingPage(page) {
     console.log("Handling Temp taking");
     // find option
@@ -141,7 +95,8 @@ const scrape = async (userId, password) => {
       args: chromium.args,
       defaultViewport: chromium.defaultViewport,
       executablePath: await chromium.executablePath,
-      headless: true,
+      headless: false,
+      slowMo: 200,
       ignoreHTTPSErrors: true,
     });
 
@@ -164,12 +119,12 @@ const scrape = async (userId, password) => {
       browser
     );
 
-    //travelled
     var [option1] = await dailyDeclarationPage.$x(
-      `//input[@id="pgContent1_rbVisitOtherCountryNo" and @type="radio" and @name="ctl00$pgContent1$OtherCountryVisited"]`
+      `//input[@id="pgContent1_cbSetToNo" and @type="checkbox" and @name="ctl00$pgContent1$cbSetToNo"]`
     );
 
     if (option1 != null) {
+      console.log("option 1");
       option1.click();
     }
 
@@ -183,7 +138,17 @@ const scrape = async (userId, password) => {
       (page) => page.url() == "https://tts.sutd.edu.sg/tt_daily_dec_user.aspx"
     )[0];
 
-    await handleDailyDeclarationPage(dailyDeclarationPage);
+    const [button] = await dailyDeclarationPage.$x(
+      `//input[@id='pgContent1_btnSave' and @name="ctl00$pgContent1$btnSave"]`
+    );
+
+    if (button != null) {
+      await wait(200);
+      button.click();
+      console.log("Button clicked");
+    }
+
+    await wait(500);
   } catch (error) {
     console.log(error);
   } finally {
