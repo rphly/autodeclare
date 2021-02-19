@@ -179,6 +179,11 @@ exports.handler = async (event, context, callback) => {
       ignoreHTTPSErrors: true,
     });
 
+    let queryParams = event.queryStringParameters;
+
+    let userId = queryParams.userId.toString();
+    let password = queryParams.password.toString();
+
     loginPage = await startNewPageAndGo(
       `https://tts.sutd.edu.sg/tt_login.aspx`,
       browser
