@@ -9,6 +9,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "2captcha": "^2.1.5-2",
     "axios": "^0.20.0",
     "chrome-aws-lambda": "^5.2.1",
     "puppeteer": "^5.2.1",

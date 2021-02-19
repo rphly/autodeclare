@@ -1,4 +1,7 @@
 const chromium = require("chrome-aws-lambda");
+const Captcha = require("2captcha");
+
+const solver = new Captcha.Solver("");
 
 /**
  * Takes in query, index, cat_id and sort_by in parameters
@@ -41,8 +44,37 @@ const scrape = async (userId, password) => {
     }
   }
 
+  async function handleCaptcha(page) {
+    console.log("Handling Captcha");
+    await page.waitForSelector("#pgContent1_Image2");
+    const [captchaImageNode] = await page.$x(`//img[@id='pgContent1_Image2']`);
+
+    const captchaImage = await captchaImageNode.screenshot({
+      encoding: "base64",
+    });
+
+    // call 2Captcha
+    const { data, id } = await solver.imageCaptcha(captchaImage, {
+      regsense: 1,
+    });
+
+    console.log(`This is the captcha: ${data}`);
+
+    const [input] = await page.$x(
+      `//input[@id='pgContent1_txtVerificationCode' and @name="ctl00$pgContent1$txtVerificationCode"]`
+    );
+    if (input) {
+      await input.type(data);
+    }
+
+    wait(200);
+  }
+
   async function handleLogin(page, userId, password) {
     console.log("Login");
+
+    await handleCaptcha(page);
+
     var [input] = await page.$x(
       `//input[@id='pgContent1_uiLoginid' and @name="ctl00$pgContent1$uiLoginid"]`
     );
@@ -96,7 +128,7 @@ const scrape = async (userId, password) => {
       defaultViewport: chromium.defaultViewport,
       executablePath: await chromium.executablePath,
       headless: false,
-      slowMo: 200,
+      slowMo: 150,
       ignoreHTTPSErrors: true,
     });
 
@@ -134,11 +166,13 @@ const scrape = async (userId, password) => {
     await wait(500);
 
     let pages = await browser.pages();
-    dailyDeclarationPage = pages.filter(
+    newDecPage = pages.filter(
       (page) => page.url() == "https://tts.sutd.edu.sg/tt_daily_dec_user.aspx"
     )[0];
 
-    const [button] = await dailyDeclarationPage.$x(
+    console.log("Found new page context");
+
+    const [button] = await newDecPage.$x(
       `//input[@id='pgContent1_btnSave' and @name="ctl00$pgContent1$btnSave"]`
     );
 
@@ -160,4 +194,4 @@ const scrape = async (userId, password) => {
   console.log("Finished");
 };
 
-scrape("studentid", "password");
+scrape("", "");

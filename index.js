@@ -1,4 +1,7 @@
 const chromium = require("chrome-aws-lambda");
+const Captcha = require("2captcha");
+
+const solver = new Captcha.Solver("");
 
 /**
  * Takes in query, index, cat_id and sort_by in parameters
@@ -88,8 +91,37 @@ exports.handler = async (event, context, callback) => {
     }
   }
 
+  async function handleCaptcha(page) {
+    console.log("Handling Captcha");
+    await page.waitForSelector("#pgContent1_Image2");
+    const [captchaImageNode] = await page.$x(`//img[@id='pgContent1_Image2']`);
+
+    const captchaImage = await captchaImageNode.screenshot({
+      encoding: "base64",
+    });
+
+    // call 2Captcha
+    const { data, id } = await solver.imageCaptcha(captchaImage, {
+      regsense: 1,
+    });
+
+    console.log(`This is the captcha: ${data}`);
+
+    const [input] = await page.$x(
+      `//input[@id='pgContent1_txtVerificationCode' and @name="ctl00$pgContent1$txtVerificationCode"]`
+    );
+    if (input) {
+      await input.type(data);
+    }
+
+    wait(200);
+  }
+
   async function handleLogin(page, userId, password) {
     console.log("Login");
+
+    await handleCaptcha(page);
+
     var [input] = await page.$x(
       `//input[@id='pgContent1_uiLoginid' and @name="ctl00$pgContent1$uiLoginid"]`
     );
@@ -142,7 +174,8 @@ exports.handler = async (event, context, callback) => {
       args: chromium.args,
       defaultViewport: chromium.defaultViewport,
       executablePath: await chromium.executablePath,
-      headless: true,
+      headless: false,
+      slowMo: 200,
       ignoreHTTPSErrors: true,
     });
 
@@ -150,11 +183,6 @@ exports.handler = async (event, context, callback) => {
       `https://tts.sutd.edu.sg/tt_login.aspx`,
       browser
     );
-
-    let queryParams = event.queryStringParameters;
-
-    let userId = queryParams.userId.toString();
-    let password = queryParams.password.toString();
 
     await handleLogin(loginPage, userId, password);
 
@@ -182,14 +210,18 @@ exports.handler = async (event, context, callback) => {
     // clicking the first option for daily dec will trigger a page refresh
     // hence, we get the page context again through browser
 
-    await wait(500);
+    await wait(1000);
 
     let pages = await browser.pages();
-    dailyDeclarationPage = pages.filter(
+    console.log(pages);
+
+    let newDecPage = pages.filter(
       (page) => page.url() == "https://tts.sutd.edu.sg/tt_daily_dec_user.aspx"
     )[0];
 
-    const [button] = await dailyDeclarationPage.$x(
+    console.log(newDecPage);
+
+    const [button] = await newDecPage.$x(
       `//input[@id='pgContent1_btnSave' and @name="ctl00$pgContent1$btnSave"]`
     );
 
